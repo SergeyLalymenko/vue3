@@ -1,40 +1,57 @@
 <script setup>
-import { computed } from 'vue';
-import pawnBlack from '@assets/icons/pawn-black.png';
-import pawnWhite from '@assets/icons/pawn-white.png';
-import rookBlack from '@assets/icons/rook-black.png';
-import rookWhite from '@assets/icons/rook-white.png';
-import knightBlack from '@assets/icons/knight-black.png';
-import knightWhite from '@assets/icons/knight-white.png';
-import bishopBlack from '@assets/icons/bishop-black.png';
-import bishopWhite from '@assets/icons/bishop-white.png';
-import queenBlack from '@assets/icons/queen-black.png';
-import queenWhite from '@assets/icons/queen-white.png';
-import kingBlack from '@assets/icons/king-black.png';
-import kingWhite from '@assets/icons/king-white.png';
+import { inject, onMounted, onUpdated } from 'vue';
 
-const { cellData, x, y } = defineProps(['cellData', 'x', 'y']);
+const { cellData } = defineProps(['cellData']);
+const {
+    moveFigure,
+    unselectCell
+} = inject('chessState');
 
-const getFigureIcon = computed(() => {
-    let icon = '';
-    
-    switch (cellData.figure) {
-        case 'pawn': icon = cellData.team === 'white' ? pawnWhite : pawnBlack; break;
-        case 'rook': icon = cellData.team === 'white' ? rookWhite : rookBlack; break;
-        case 'knight': icon = cellData.team === 'white' ? knightWhite : knightBlack; break;
-        case 'bishop': icon = cellData.team === 'white' ? bishopWhite : bishopBlack; break;
-        case 'queen': icon = cellData.team === 'white' ? queenWhite : queenBlack; break;
-        case 'king': icon = cellData.team === 'white' ? kingWhite : kingBlack; break;
+function sayFigureCoordinates() {
+    console.log(cellData.figure?.getCoordinates());
+}
+
+function onCellClick() {
+    if (cellData.selected) {
+        unselectCell(cellData.coordinates);
+        return;
     }
+    moveFigure(cellData.figure, cellData.coordinates, { x: 3, y: 2 });
+}
 
-    return icon;
+function setFigureCoordinates() {
+    cellData.figure?.setCoordinates(cellData.coordinates);
+}
+
+onMounted(() => {
+    setFigureCoordinates();
+});
+
+onUpdated(() => {
+    setFigureCoordinates();
 });
 </script>
 
 <template>
-    <div class="cell" :class="{ white: (x + y) % 2 === 0 }">
-        <img v-if="cellData.figure" class="cell__figure" :src="getFigureIcon" />
+    <div
+        v-if="cellData.figure"
+        class="cell"
+        :class="{
+            white: (cellData.coordinates.x + cellData.coordinates.y) % 2 === 0,
+            selected: cellData.selected
+        }"
+        @click="onCellClick"
+    >
+        <img class="cell__figure" :src="cellData.figure.icon" />
+        <p class="coor">
+            {{ cellData.coordinates.x }} {{ cellData.coordinates.y }}
+        </p>
     </div>
+    <div
+        v-else
+        class="cell"
+        :class="{ white: (cellData.coordinates.x + cellData.coordinates.y) % 2 === 0 }"
+    ></div>
 </template>
 
 <style lang="scss" scoped>
@@ -47,13 +64,23 @@ const getFigureIcon = computed(() => {
     aspect-ratio: 1 / 1;
     width: calc(100% / 8);
     background: rgb(54, 51, 51);
+    border: 5px solid transparent;
 
     &.white {
         background: white;
     }
 
+    &.selected {
+        border-color: $colorActive;
+    }
+
     &__figure {
         width: 50%;
+    }
+
+    .coor {
+        color: red;
+        font-size: 12px;
     }
 }
 </style>

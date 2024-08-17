@@ -3,16 +3,16 @@ import { inject } from 'vue';
 import ChessCell from '@components/ChessCell.vue';
 
 const {
-    chessData
-} = inject('chessData');
+    chessState
+} = inject('chessState');
 
 </script>
 
 <template>
     <div class="table">
-        <div v-if="Object.keys(chessData).length" class="table__inner">
-            <template v-for="(rowData, x) in chessData.table">
-                <ChessCell v-for="(cellData, y) in rowData" :cellData :x :y :key="`${x}${y}`" />
+        <div v-if="Object.keys(chessState).length" class="table__inner">
+            <template v-for="rowData in chessState.table">
+                <ChessCell v-for="cellData in rowData" :cellData :key="`${cellData.coordinates.y}${cellData.coordinates.x}`" />
             </template>
         </div>
         <div v-else>

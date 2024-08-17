@@ -1,93 +1,92 @@
 <script setup>
 import { ref, provide, onMounted } from 'vue';
+import { useRook } from '@composables/useRook.js';
+import { useKnight } from '@composables/useKnight.js';
+import { useBishop } from '@composables/useBishop.js';
+import { useQueen } from '@composables/useQueen.js';
+import { useKing } from '@composables/useKing.js';
+import { usePawn } from '@composables/usePawn.js';
 import ChessTable from '@modules/ChessTable.vue';
 
-const chessData = ref({});
+const chessState = ref({});
 
 const defaultCell = {
     figure: null,
-    team: null,
-    active: false
+    coordinates: {},
+    selected: false
 };
 const figures = [
-    {
-        figure: 'rook'
-    },
-    {
-        figure: 'knight'
-    },
-    {
-        figure: 'bishop'
-    },
-    {
-        figure: 'queen'
-    },
-    {
-        figure: 'king'
-    },
-    {
-        figure: 'bishop'
-    },
-    {
-        figure: 'knight'
-    },
-    {
-        figure: 'rook'
-    }
+    useRook,
+    useKnight,
+    useBishop,
+    useQueen,
+    useKing,
+    useBishop,
+    useKnight,
+    useRook
 ];
 
-provide('chessData', {
-    chessData
+provide('chessState', {
+    chessState,
+    moveFigure,
+    unselectCell
 });
 
-setTimeout(() => {
-    chessData.value.table[0][0].figure = 'pawn';
-}, 5000);
+function moveFigure(figure, from, to) {
+    chessState.value.table[from.y][from.x].figure = null;
+    chessState.value.table[to.y][to.x].figure = figure;
+};
+
+function unselectCell({ x, y }) {
+    chessState.value.table[y][x].selected = false;
+}
 
 onMounted(() => {
-    const tableRow = [];
     const table = [];
 
-    for (let i = 0; i < 8; i++) {
-        tableRow.push({ ...defaultCell });
-    }
-    for (let i = 0; i < 8; i++) {
-        table.push([...tableRow]);
+    for (let y = 0; y < 8; y++) {
+        const tableRow = [];
+        
+        for (let x = 0; x < 8; x++) {
+            tableRow.push({
+                ...defaultCell,
+                coordinates: { x, y }
+            });
+        }
+
+        const uniqueTableRow = tableRow.map((cell) => ({ ...cell }));
+        table.push(uniqueTableRow);
     }
 
     table[0] = table[0].map((emptyCell, i) => {
         return {
             ...emptyCell,
-            ...figures[i],
-            team: 'black'
+            figure: figures[i]('black', { x: i, y: 0 })
         };
     });
 
     table[1] = table[1].map((emptyCell, i) => {
         return {
             ...emptyCell,
-            figure: 'pawn',
-            team: 'black'
+            figure: usePawn('black', { x: i, y: 1 })
         };
     });
 
-    table[6] = table[1].map((emptyCell, i) => {
+    table[6] = table[6].map((emptyCell, i) => {
         return {
             ...emptyCell,
-            figure: 'pawn',
-            team: 'white'
+            figure: usePawn('white', { x: i, y: 6 })
         };
     });
 
-    table[7] = table[7].map((emptyCell, i) => {
+    table[7] = table[1].map((emptyCell, i) => {
         return {
             ...emptyCell,
-            ...figures[i],
-            team: 'white'
+            figure: figures[i]('white', { x: i, y: 7 })
         };
     });
 
-    chessData.value.table = table;
+    chessState.value.table = table;
 });
 </script>
 
