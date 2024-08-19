@@ -8,7 +8,10 @@ import { useKing } from '@composables/useKing.js';
 import { usePawn } from '@composables/usePawn.js';
 import ChessTable from '@modules/ChessTable.vue';
 
-const chessState = ref({});
+const chessState = ref({
+    teamMove: 'white',
+    table: [],
+});
 
 const defaultCell = {
     figure: null,
@@ -28,17 +31,71 @@ const figures = [
 
 provide('chessState', {
     chessState,
-    moveFigure,
+    moveSelectedFigure,
+    selectCell,
     unselectCell
 });
 
-function moveFigure(figure, from, to) {
-    chessState.value.table[from.y][from.x].figure = null;
-    chessState.value.table[to.y][to.x].figure = figure;
-};
+function moveSelectedFigure({ x, y }) {
+    const selectedCellCoordinates = getSelectedCellCoordinates();
+    const selectedFigure = chessState.value.table[selectedCellCoordinates.y][selectedCellCoordinates.x].figure;
+    chessState.value.table[selectedCellCoordinates.y][selectedCellCoordinates.x].figure = null;
+    chessState.value.table[y][x].figure = selectedFigure;
+
+    applyForEveryCell((cell) => {
+        cell.active = false;
+        cell.selected = false;
+    });
+    toggleTeamMove();
+}
+
+function selectCell({ x, y }, availableMoves) {
+    applyForEveryCell((cell) => {
+        cell.active = false,
+        cell.selected = false
+    });
+    chessState.value.table[y][x].selected = true;
+    applyForSomeCells(availableMoves, (cell) => {
+        cell.active = true;
+    });
+}
 
 function unselectCell({ x, y }) {
     chessState.value.table[y][x].selected = false;
+    applyForEveryCell((cell) => {
+        cell.active = false;
+    });
+}
+
+function toggleTeamMove() {
+    chessState.value.teamMove = chessState.value.teamMove === 'white' ? 'black' : 'white';
+}
+
+function getSelectedCellCoordinates() {
+    let selectedCellCoordinates = {};
+
+    chessState.value.table.forEach((row) => {
+        row.forEach(({ selected, coordinates}) => {
+            if (!selected) return;
+            selectedCellCoordinates = coordinates;
+        });
+    });
+
+    return selectedCellCoordinates;
+}
+
+function applyForEveryCell(callback) {
+    chessState.value.table.forEach((row) => {
+        row.forEach((cell) => {
+            callback(cell);
+        });
+    });
+}
+
+function applyForSomeCells(cells, callback) {
+    cells.forEach(({ x, y }) => {
+        callback(chessState.value.table[y][x]);
+    });
 }
 
 onMounted(() => {
@@ -79,7 +136,7 @@ onMounted(() => {
         };
     });
 
-    table[7] = table[1].map((emptyCell, i) => {
+    table[7] = table[7].map((emptyCell, i) => {
         return {
             ...emptyCell,
             figure: figures[i]('white', { x: i, y: 7 })

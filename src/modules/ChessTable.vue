@@ -10,7 +10,7 @@ const {
 
 <template>
     <div class="table">
-        <div v-if="Object.keys(chessState).length" class="table__inner">
+        <div v-if="chessState.table?.length" class="table__inner">
             <template v-for="rowData in chessState.table">
                 <ChessCell v-for="cellData in rowData" :cellData :key="`${cellData.coordinates.y}${cellData.coordinates.x}`" />
             </template>

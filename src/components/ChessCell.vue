@@ -3,7 +3,9 @@ import { inject, onMounted, onUpdated } from 'vue';
 
 const { cellData } = defineProps(['cellData']);
 const {
-    moveFigure,
+    chessState,
+    moveSelectedFigure,
+    selectCell,
     unselectCell
 } = inject('chessState');
 
@@ -12,11 +14,34 @@ function sayFigureCoordinates() {
 }
 
 function onCellClick() {
+    if (!isCurrentTeamMove() && !cellData.active) return;
+    
     if (cellData.selected) {
         unselectCell(cellData.coordinates);
         return;
     }
-    moveFigure(cellData.figure, cellData.coordinates, { x: 3, y: 2 });
+
+    if (cellData.active) {
+        moveSelectedFigure(cellData.coordinates);
+        return;
+    }
+
+    if (!cellData.selected) {
+        const availableMoves = cellData.figure.getAvailableMoves(chessState.value.table);
+        selectCell(cellData.coordinates, availableMoves);
+        return;
+    }
+}
+
+function onEmptyCellClick() {
+    if (cellData.active) {
+        moveSelectedFigure(cellData.coordinates);
+        return;
+    }
+}
+
+function isCurrentTeamMove() {
+    return chessState.value.teamMove === cellData.figure.team;
 }
 
 function setFigureCoordinates() {
@@ -38,19 +63,22 @@ onUpdated(() => {
         class="cell"
         :class="{
             white: (cellData.coordinates.x + cellData.coordinates.y) % 2 === 0,
-            selected: cellData.selected
+            active: cellData.active,
+            selected: cellData.selected,
+            currentTeamMove: chessState.teamMove === cellData.figure.team
         }"
         @click="onCellClick"
     >
         <img class="cell__figure" :src="cellData.figure.icon" />
-        <p class="coor">
-            {{ cellData.coordinates.x }} {{ cellData.coordinates.y }}
-        </p>
     </div>
     <div
         v-else
-        class="cell"
-        :class="{ white: (cellData.coordinates.x + cellData.coordinates.y) % 2 === 0 }"
+        class="cell empty"
+        :class="{
+            white: (cellData.coordinates.x + cellData.coordinates.y) % 2 === 0,
+            active: cellData.active
+        }"
+        @click="onEmptyCellClick"
     ></div>
 </template>
 
@@ -70,17 +98,25 @@ onUpdated(() => {
         background: white;
     }
 
+    &.active {
+        border-color: $colorActive;
+        cursor: pointer;
+
+        &:not(.currentTeamMove):not(.empty) {
+            border-color: $colorDanger;
+        }
+    }
+
     &.selected {
         border-color: $colorActive;
     }
 
-    &__figure {
-        width: 50%;
+    &.currentTeamMove {
+        cursor: pointer;
     }
 
-    .coor {
-        color: red;
-        font-size: 12px;
+    &__figure {
+        width: 50%;
     }
 }
 </style>
