@@ -1,11 +1,11 @@
 <script setup>
 import { ref, provide, onMounted } from 'vue';
-import { useRook } from '@composables/useRook.js';
-import { useKnight } from '@composables/useKnight.js';
-import { useBishop } from '@composables/useBishop.js';
-import { useQueen } from '@composables/useQueen.js';
-import { useKing } from '@composables/useKing.js';
-import { usePawn } from '@composables/usePawn.js';
+import Rook from '@figures/Rook.js';
+import Knight from '@figures/Knight.js';
+import Bishop from '@figures/Bishop.js';
+import Queen from '@figures/Queen.js';
+import King from '@figures/King.js';
+import Pawn from '@figures/Pawn.js';
 import ChessTable from '@modules/ChessTable.vue';
 
 const chessState = ref({
@@ -19,14 +19,14 @@ const defaultCell = {
     selected: false
 };
 const figures = [
-    useRook,
-    useKnight,
-    useBishop,
-    useQueen,
-    useKing,
-    useBishop,
-    useKnight,
-    useRook
+    Rook,
+    Knight,
+    Bishop,
+    Queen,
+    King,
+    Bishop,
+    Knight,
+    Rook
 ];
 
 provide('chessState', {
@@ -118,28 +118,28 @@ onMounted(() => {
     table[0] = table[0].map((emptyCell, i) => {
         return {
             ...emptyCell,
-            figure: figures[i]('black', { x: i, y: 0 })
+            figure: new figures[i]('black')
         };
     });
 
     table[1] = table[1].map((emptyCell, i) => {
         return {
             ...emptyCell,
-            figure: usePawn('black', { x: i, y: 1 })
+            figure: new Pawn('black')
         };
     });
 
     table[6] = table[6].map((emptyCell, i) => {
         return {
             ...emptyCell,
-            figure: usePawn('white', { x: i, y: 6 })
+            figure: new Pawn('white')
         };
     });
 
     table[7] = table[7].map((emptyCell, i) => {
         return {
             ...emptyCell,
-            figure: figures[i]('white', { x: i, y: 7 })
+            figure: new figures[i]('white')
         };
     });
 
