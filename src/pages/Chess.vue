@@ -1,5 +1,6 @@
 <script setup>
-import { ref, provide, onMounted } from 'vue';
+import { ref, provide, onMounted, watch } from 'vue';
+import { _ } from 'lodash';
 import Rook from '@figures/Rook.js';
 import Knight from '@figures/Knight.js';
 import Bishop from '@figures/Bishop.js';
@@ -54,8 +55,13 @@ function selectCell({ x, y }, availableMoves) {
         cell.active = false,
         cell.selected = false
     });
-    chessState.value.table[y][x].selected = true;
-    applyForSomeCells(availableMoves, (cell) => {
+    const selectedCell = chessState.value.table[y][x];
+    selectedCell.selected = true;
+    
+    const enemyTeam = selectedCell.figure.team === 'white' ? 'black' : 'white';
+    const filteredMoves = selectedCell.figure.name === 'king' ? availableMoves.filter((availableMove) => isAvailableKingMove(enemyTeam, availableMove, { x, y })) : availableMoves;
+    
+    applyForSomeCells(filteredMoves, (cell) => {
         cell.active = true;
     });
 }
@@ -65,6 +71,103 @@ function unselectCell({ x, y }) {
     applyForEveryCell((cell) => {
         cell.active = false;
     });
+}
+
+function isAvailableKingMove(enemyTeam, coordinatesTo, coordinatesFrom) {
+    let isAvailable = true;
+
+    const copyTable = _.cloneDeep(chessState.value.table);
+    const selectedFigure = copyTable[coordinatesFrom.y][coordinatesFrom.x].figure;
+    copyTable[coordinatesFrom.y][coordinatesFrom.x].figure = null;
+    copyTable[coordinatesTo.y][coordinatesTo.x].figure = selectedFigure;
+    
+    applyForEveryCell((cell) => {
+        const enemyAvailableMoves = cell.figure?.team === enemyTeam && cell.figure?.getAvailableMoves(copyTable, true);
+        if (!enemyAvailableMoves) return;
+
+        enemyAvailableMoves.forEach((enemyAvailableMove) => {
+            if (enemyAvailableMove.x === coordinatesTo.x && enemyAvailableMove.y === coordinatesTo.y) {
+                isAvailable = false;
+            }
+        });
+    });
+    
+    return isAvailable;
+}
+
+function getKingCoordinates(team, table = chessState.value.table) {
+    let kingCoordinates = {};
+
+    applyForEveryCell((cell) => {
+        if (cell.figure?.name === 'king' && cell.figure.team === team) {
+            kingCoordinates = { ...cell.coordinates };
+        }
+    }, table);
+
+    return kingCoordinates;
+}
+
+function onFigureCoordinatesUpdated() {
+    const isKingUnderAttack = getIsKingUnderAttack();
+    if (!isKingUnderAttack) return;
+
+    const isVariantToMove = getIsVariantToMove();
+    console.log(isKingUnderAttack, isVariantToMove);
+    if (!isVariantToMove) {
+        const winner = chessState.value.teamMove === 'white' ? 'Black' : 'White';
+        alert(`${winner} win!`);
+    }
+}
+
+function getIsVariantToMove() {
+    let isVariantToMove = false;
+
+    applyForEveryCell((cell) => {
+        const availableMoves = cell.figure?.team === chessState.value.teamMove && cell.figure.getAvailableMoves(chessState.value.table, true);
+        if (!availableMoves) return;
+
+        availableMoves.forEach((availableMove) => {
+            const copyTable = _.cloneDeep(chessState.value.table);
+            const selectedFigure = copyTable[cell.coordinates.y][cell.coordinates.x].figure;
+            selectedFigure.coordinates = { x: availableMove.x, y: availableMove.y };
+            copyTable[cell.coordinates.y][cell.coordinates.x].figure = null;
+            copyTable[availableMove.y][availableMove.x].figure = selectedFigure;
+
+            if (selectedFigure.name === 'knight') {
+                console.log(availableMove.x, availableMove.y);
+                console.log({ d: copyTable });
+
+            }
+
+            const isKingUnderAttack = getIsKingUnderAttack(copyTable);
+
+            if (isKingUnderAttack) return;
+
+            isVariantToMove = true;
+        });
+    });
+
+    return isVariantToMove;
+}
+
+function getIsKingUnderAttack(table = chessState.value.table) {
+    let isUnderAttack = false;
+
+    const enemyTeam = chessState.value.teamMove === 'white' ? 'black' : 'white';
+    const kingCoordinates = getKingCoordinates(chessState.value.teamMove, table);
+
+    applyForEveryCell((cell) => {
+        const availableMoves = cell.figure?.team === enemyTeam && cell.figure?.getAvailableMoves(table, true);
+        if (!availableMoves) return;
+
+        availableMoves.forEach((availableMove) => {
+            if (availableMove.x === kingCoordinates.x && availableMove.y === kingCoordinates.y) {
+                isUnderAttack = true;
+            }
+        });
+    }, table);
+
+    return isUnderAttack;
 }
 
 function toggleTeamMove() {
@@ -84,8 +187,8 @@ function getSelectedCellCoordinates() {
     return selectedCellCoordinates;
 }
 
-function applyForEveryCell(callback) {
-    chessState.value.table.forEach((row) => {
+function applyForEveryCell(callback, table = chessState.value.table) {
+    table.forEach((row) => {
         row.forEach((cell) => {
             callback(cell);
         });
@@ -145,6 +248,16 @@ onMounted(() => {
 
     chessState.value.table = table;
 });
+
+watch(
+    () => chessState.value.table,
+    () => {
+        onFigureCoordinatesUpdated();
+    },
+    {
+        deep: true
+    }
+)
 </script>
 
 <template>

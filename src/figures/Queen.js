@@ -26,7 +26,7 @@ class Queen extends Figure {
             { x: -1, y: 1 }
         ];
         const availableMoves = this.getMovesByDirections(table, directions);
-
+ 
         return availableMoves;
     }
 };

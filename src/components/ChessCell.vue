@@ -1,5 +1,5 @@
 <script setup>
-import { inject, onMounted, onUpdated } from 'vue';
+import { inject, onMounted, onUpdated, watch } from 'vue';
 
 const { cellData } = defineProps(['cellData']);
 const {
@@ -8,10 +8,6 @@ const {
     selectCell,
     unselectCell
 } = inject('chessState');
-
-function sayFigureCoordinates() {
-    console.log(cellData.figure?.getCoordinates());
-}
 
 function onCellClick() {
     if (!isCurrentTeamMove() && !cellData.active) return;
