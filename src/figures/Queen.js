@@ -3,8 +3,8 @@ import queenBlack from '@assets/icons/queen-black.png';
 import queenWhite from '@assets/icons/queen-white.png';
 
 class Queen extends Figure {
-    constructor(team) {
-        super('queen');
+    constructor(team, initialCoordinates) {
+        super('queen', initialCoordinates);
         
         this.team = team;
         this.icon = this.getIcon();

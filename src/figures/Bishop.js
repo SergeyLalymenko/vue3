@@ -3,8 +3,8 @@ import bishopBlack from '@assets/icons/bishop-black.png';
 import bishopWhite from '@assets/icons/bishop-white.png';
 
 class Bishop extends Figure {
-    constructor(team) {
-        super('bishop');
+    constructor(team, initialCoordinates) {
+        super('bishop', initialCoordinates);
         
         this.team = team;
         this.icon = this.getIcon();

@@ -1,8 +1,8 @@
 class Figure {
     
-    constructor(name) {
+    constructor(name, initialCoordinates) {
         this.name = name;
-        this.coordinates = {};
+        this.coordinates = initialCoordinates;
     }
 
     getCoordinates() {

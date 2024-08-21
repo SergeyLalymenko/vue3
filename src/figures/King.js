@@ -3,8 +3,8 @@ import kingBlack from '@assets/icons/king-black.png';
 import kingWhite from '@assets/icons/king-white.png';
 
 class King extends Figure {
-    constructor(team) {
-        super('king');
+    constructor(team, initialCoordinates) {
+        super('king', initialCoordinates);
         
         this.team = team;
         this.icon = this.getIcon();

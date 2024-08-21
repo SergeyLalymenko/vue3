@@ -3,8 +3,8 @@ import pawnBlack from '@assets/icons/pawn-black.png';
 import pawnWhite from '@assets/icons/pawn-white.png';
 
 class Pawn extends Figure {
-    constructor(team) {
-        super('pawn');
+    constructor(team, initialCoordinates) {
+        super('pawn', initialCoordinates);
         
         this.team = team;
         this.isFirstStep = true;

@@ -3,8 +3,8 @@ import rookBlack from '@assets/icons/rook-black.png';
 import rookWhite from '@assets/icons/rook-white.png';
 
 class Rook extends Figure {
-    constructor(team) {
-        super('rook');
+    constructor(team, initialCoordinates) {
+        super('rook', initialCoordinates);
         
         this.team = team;
         this.icon = this.getIcon();

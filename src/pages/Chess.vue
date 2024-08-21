@@ -107,16 +107,46 @@ function getKingCoordinates(team, table = chessState.value.table) {
     return kingCoordinates;
 }
 
-function onFigureCoordinatesUpdated() {
+function checkGameStatus() {
     const isKingUnderAttack = getIsKingUnderAttack();
-    if (!isKingUnderAttack) return;
+    if (!isKingUnderAttack) {
+        checkStalemate();
+        return;
+    };
 
     const isVariantToMove = getIsVariantToMove();
-    console.log(isKingUnderAttack, isVariantToMove);
     if (!isVariantToMove) {
         const winner = chessState.value.teamMove === 'white' ? 'Black' : 'White';
         alert(`${winner} win!`);
     }
+}
+
+function checkStalemate() {
+    let isStalemate = true;
+
+    applyForEveryCell((cell) => {
+        const availableMoves = cell.figure?.team === chessState.value.teamMove && cell.figure.getAvailableMoves(chessState.value.table, true);
+        if (!availableMoves) return;
+
+        availableMoves.forEach((availableMove) => {
+            const copyTable = _.cloneDeep(chessState.value.table);
+            const selectedFigure = copyTable[cell.coordinates.y][cell.coordinates.x].figure;
+            selectedFigure.coordinates = { x: availableMove.x, y: availableMove.y };
+            copyTable[cell.coordinates.y][cell.coordinates.x].figure = null;
+            copyTable[availableMove.y][availableMove.x].figure = selectedFigure;
+            
+            const isKingUnderAttack = getIsKingUnderAttack(copyTable);
+            if (isKingUnderAttack) return;
+
+            isStalemate = false;
+        });
+    });
+
+    console.log(isStalemate);
+
+    if (!isStalemate) return;
+
+    alert('Stalemate!');
 }
 
 function getIsVariantToMove() {
@@ -133,14 +163,7 @@ function getIsVariantToMove() {
             copyTable[cell.coordinates.y][cell.coordinates.x].figure = null;
             copyTable[availableMove.y][availableMove.x].figure = selectedFigure;
 
-            if (selectedFigure.name === 'knight') {
-                console.log(availableMove.x, availableMove.y);
-                console.log({ d: copyTable });
-
-            }
-
             const isKingUnderAttack = getIsKingUnderAttack(copyTable);
-
             if (isKingUnderAttack) return;
 
             isVariantToMove = true;
@@ -221,28 +244,28 @@ onMounted(() => {
     table[0] = table[0].map((emptyCell, i) => {
         return {
             ...emptyCell,
-            figure: new figures[i]('black')
+            figure: new figures[i]('black', { x: i, y: 0 })
         };
     });
 
     table[1] = table[1].map((emptyCell, i) => {
         return {
             ...emptyCell,
-            figure: new Pawn('black')
+            figure: new Pawn('black', { x: i, y: 1 })
         };
     });
 
     table[6] = table[6].map((emptyCell, i) => {
         return {
             ...emptyCell,
-            figure: new Pawn('white')
+            figure: new Pawn('white', { x: i, y: 6 })
         };
     });
 
     table[7] = table[7].map((emptyCell, i) => {
         return {
             ...emptyCell,
-            figure: new figures[i]('white')
+            figure: new figures[i]('white', { x: i, y: 7 })
         };
     });
 
@@ -252,12 +275,13 @@ onMounted(() => {
 watch(
     () => chessState.value.table,
     () => {
-        onFigureCoordinatesUpdated();
+        if (!chessState.value.table.length) return;
+        checkGameStatus();
     },
     {
         deep: true
     }
-)
+);
 </script>
 
 <template>
