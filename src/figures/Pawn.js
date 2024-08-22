@@ -11,11 +11,15 @@ class Pawn extends Figure {
         this.icon = this.getIcon();
     }
 
+    setIsFirstStep(isFirstStep) {
+        this.isFirstStep = isFirstStep;
+    }
+
     getIcon() {
         return this.team === 'white' ? pawnWhite : pawnBlack;
     }
 
-    getAvailableMoves(table, fakeMove = false) {
+    getAvailableMoves(table) {
         const stepDirection = this.team === 'white' ? -1 : 1;
         const maxMoveLength = this.isFirstStep ? 2 : 1;
         const moveDirections = [
@@ -29,10 +33,6 @@ class Pawn extends Figure {
             ...this.getMovesByDirections(table, moveDirections, maxMoveLength, false),
             ...this.getMovesByDirections(table, killDirections, 1, true, true)
         ];
-
-        if (!fakeMove) {
-            this.isFirstStep = false;
-        }
 
         return availableMoves;
     }

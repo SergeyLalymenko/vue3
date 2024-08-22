@@ -5,12 +5,11 @@ import ChessCell from '@components/ChessCell.vue';
 const {
     chessState
 } = inject('chessState');
-
 </script>
 
 <template>
-    <div class="table">
-        <div v-if="chessState.table?.length" class="table__inner">
+    <div class="table" :class="{ isActiveGame: chessState.isActiveGame }">
+        <div v-if="Object.keys(chessState).length" class="table__inner">
             <template v-for="rowData in chessState.table">
                 <ChessCell v-for="cellData in rowData" :cellData :key="`${cellData.coordinates.y}${cellData.coordinates.x}`" />
             </template>
@@ -26,6 +25,11 @@ const {
 
 .table {
     width: 100%;
+    pointer-events: none;
+
+    &.isActiveGame {
+        pointer-events: all;
+    }
 
     &__inner {
         display: flex;

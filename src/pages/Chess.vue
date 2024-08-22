@@ -1,5 +1,5 @@
 <script setup>
-import { ref, provide, onMounted, watch } from 'vue';
+import { ref, provide, onMounted, watch, nextTick } from 'vue';
 import { _ } from 'lodash';
 import Rook from '@figures/Rook.js';
 import Knight from '@figures/Knight.js';
@@ -8,12 +8,24 @@ import Queen from '@figures/Queen.js';
 import King from '@figures/King.js';
 import Pawn from '@figures/Pawn.js';
 import ChessTable from '@modules/ChessTable.vue';
+import Button from '@UI/Button.vue';
+import Modal from '@components/Modal.vue';
 
-const chessState = ref({
-    teamMove: 'white',
-    table: [],
+const chessState = ref({});
+const modal = ref({
+    isOpen: false,
+    text: ''
 });
 
+const modalConfig = {
+    title: 'Game over!',
+    size: 'sm'
+};
+const buttonConfig = {
+    visualType: 'primary',
+    type: 'text',
+    size: 'xl'
+};
 const defaultCell = {
     figure: null,
     coordinates: {},
@@ -40,6 +52,7 @@ provide('chessState', {
 function moveSelectedFigure({ x, y }) {
     const selectedCellCoordinates = getSelectedCellCoordinates();
     const selectedFigure = chessState.value.table[selectedCellCoordinates.y][selectedCellCoordinates.x].figure;
+    selectedFigure.name === 'pawn' && selectedFigure.setIsFirstStep(false);
     chessState.value.table[selectedCellCoordinates.y][selectedCellCoordinates.x].figure = null;
     chessState.value.table[y][x].figure = selectedFigure;
 
@@ -47,19 +60,17 @@ function moveSelectedFigure({ x, y }) {
         cell.active = false;
         cell.selected = false;
     });
-    toggleTeamMove();
+    toggleTeams();
 }
 
-function selectCell({ x, y }, availableMoves) {
+function selectCell(coordinatesFrom, availableMoves) {
     applyForEveryCell((cell) => {
         cell.active = false,
         cell.selected = false
     });
-    const selectedCell = chessState.value.table[y][x];
-    selectedCell.selected = true;
+    chessState.value.table[coordinatesFrom.y][coordinatesFrom.x].selected = true;
     
-    const enemyTeam = selectedCell.figure.team === 'white' ? 'black' : 'white';
-    const filteredMoves = selectedCell.figure.name === 'king' ? availableMoves.filter((availableMove) => isAvailableKingMove(enemyTeam, availableMove, { x, y })) : availableMoves;
+    const filteredMoves = availableMoves.filter((availableMove) => isAvailableMove(coordinatesFrom, availableMove));
     
     applyForSomeCells(filteredMoves, (cell) => {
         cell.active = true;
@@ -73,26 +84,14 @@ function unselectCell({ x, y }) {
     });
 }
 
-function isAvailableKingMove(enemyTeam, coordinatesTo, coordinatesFrom) {
-    let isAvailable = true;
+function createTableCopy(coordinatesFrom, coordinatesTo) {
+    const tableCopy = _.cloneDeep(chessState.value.table);
+    const selectedFigure = tableCopy[coordinatesFrom.y][coordinatesFrom.x].figure;
+    selectedFigure.setCoordinates(coordinatesTo);
+    tableCopy[coordinatesFrom.y][coordinatesFrom.x].figure = null;
+    tableCopy[coordinatesTo.y][coordinatesTo.x].figure = selectedFigure;
 
-    const copyTable = _.cloneDeep(chessState.value.table);
-    const selectedFigure = copyTable[coordinatesFrom.y][coordinatesFrom.x].figure;
-    copyTable[coordinatesFrom.y][coordinatesFrom.x].figure = null;
-    copyTable[coordinatesTo.y][coordinatesTo.x].figure = selectedFigure;
-    
-    applyForEveryCell((cell) => {
-        const enemyAvailableMoves = cell.figure?.team === enemyTeam && cell.figure?.getAvailableMoves(copyTable, true);
-        if (!enemyAvailableMoves) return;
-
-        enemyAvailableMoves.forEach((enemyAvailableMove) => {
-            if (enemyAvailableMove.x === coordinatesTo.x && enemyAvailableMove.y === coordinatesTo.y) {
-                isAvailable = false;
-            }
-        });
-    });
-    
-    return isAvailable;
+    return tableCopy;
 }
 
 function getKingCoordinates(team, table = chessState.value.table) {
@@ -116,8 +115,8 @@ function checkGameStatus() {
 
     const isVariantToMove = getIsVariantToMove();
     if (!isVariantToMove) {
-        const winner = chessState.value.teamMove === 'white' ? 'Black' : 'White';
-        alert(`${winner} win!`);
+        const winner = chessState.value.currentTeam === 'white' ? 'Black' : 'White';
+        gameOver(`${winner} win!`);
     }
 }
 
@@ -125,45 +124,33 @@ function checkStalemate() {
     let isStalemate = true;
 
     applyForEveryCell((cell) => {
-        const availableMoves = cell.figure?.team === chessState.value.teamMove && cell.figure.getAvailableMoves(chessState.value.table, true);
+        const availableMoves = cell.figure?.team === chessState.value.currentTeam && cell.figure.getAvailableMoves(chessState.value.table);
         if (!availableMoves) return;
-
+        
         availableMoves.forEach((availableMove) => {
-            const copyTable = _.cloneDeep(chessState.value.table);
-            const selectedFigure = copyTable[cell.coordinates.y][cell.coordinates.x].figure;
-            selectedFigure.coordinates = { x: availableMove.x, y: availableMove.y };
-            copyTable[cell.coordinates.y][cell.coordinates.x].figure = null;
-            copyTable[availableMove.y][availableMove.x].figure = selectedFigure;
-            
-            const isKingUnderAttack = getIsKingUnderAttack(copyTable);
+            const tableCopy = createTableCopy(cell.coordinates, availableMove);
+            const isKingUnderAttack = getIsKingUnderAttack(tableCopy);
             if (isKingUnderAttack) return;
 
             isStalemate = false;
         });
     });
 
-    console.log(isStalemate);
-
     if (!isStalemate) return;
 
-    alert('Stalemate!');
+    gameOver('Stalemate!');
 }
 
 function getIsVariantToMove() {
     let isVariantToMove = false;
 
     applyForEveryCell((cell) => {
-        const availableMoves = cell.figure?.team === chessState.value.teamMove && cell.figure.getAvailableMoves(chessState.value.table, true);
+        const availableMoves = cell.figure?.team === chessState.value.currentTeam && cell.figure.getAvailableMoves(chessState.value.table);
         if (!availableMoves) return;
 
         availableMoves.forEach((availableMove) => {
-            const copyTable = _.cloneDeep(chessState.value.table);
-            const selectedFigure = copyTable[cell.coordinates.y][cell.coordinates.x].figure;
-            selectedFigure.coordinates = { x: availableMove.x, y: availableMove.y };
-            copyTable[cell.coordinates.y][cell.coordinates.x].figure = null;
-            copyTable[availableMove.y][availableMove.x].figure = selectedFigure;
-
-            const isKingUnderAttack = getIsKingUnderAttack(copyTable);
+            const tableCopy = createTableCopy(cell.coordinates, availableMove);
+            const isKingUnderAttack = getIsKingUnderAttack(tableCopy);
             if (isKingUnderAttack) return;
 
             isVariantToMove = true;
@@ -173,14 +160,33 @@ function getIsVariantToMove() {
     return isVariantToMove;
 }
 
+function isAvailableMove(coordinatesFrom, coordinatesTo) {
+    let isAvailable = true;
+
+    const tableCopy = createTableCopy(coordinatesFrom, coordinatesTo);
+    const kingCoordinates = getKingCoordinates(chessState.value.currentTeam, tableCopy);
+
+    applyForEveryCell((cell) => {
+        const enemyAvailableMoves = cell.figure?.team === chessState.value.enemyTeam && cell.figure?.getAvailableMoves(tableCopy);
+        if (!enemyAvailableMoves) return;
+
+        enemyAvailableMoves.forEach((enemyAvailableMove) => {
+            if (enemyAvailableMove.x === kingCoordinates.x && enemyAvailableMove.y === kingCoordinates.y) {
+                isAvailable = false;
+            }
+        });
+    }, tableCopy);
+    
+    return isAvailable;
+}
+
 function getIsKingUnderAttack(table = chessState.value.table) {
     let isUnderAttack = false;
 
-    const enemyTeam = chessState.value.teamMove === 'white' ? 'black' : 'white';
-    const kingCoordinates = getKingCoordinates(chessState.value.teamMove, table);
+    const kingCoordinates = getKingCoordinates(chessState.value.currentTeam, table);
 
     applyForEveryCell((cell) => {
-        const availableMoves = cell.figure?.team === enemyTeam && cell.figure?.getAvailableMoves(table, true);
+        const availableMoves = cell.figure?.team === chessState.value.enemyTeam && cell.figure?.getAvailableMoves(table);
         if (!availableMoves) return;
 
         availableMoves.forEach((availableMove) => {
@@ -193,8 +199,15 @@ function getIsKingUnderAttack(table = chessState.value.table) {
     return isUnderAttack;
 }
 
-function toggleTeamMove() {
-    chessState.value.teamMove = chessState.value.teamMove === 'white' ? 'black' : 'white';
+function toggleTeams() {
+    if (chessState.value.currentTeam === 'white') {
+        chessState.value.currentTeam = 'black';
+        chessState.value.enemyTeam = 'white';
+        return;
+    }
+
+    chessState.value.currentTeam = 'white';
+    chessState.value.enemyTeam = 'black';
 }
 
 function getSelectedCellCoordinates() {
@@ -208,6 +221,16 @@ function getSelectedCellCoordinates() {
     });
 
     return selectedCellCoordinates;
+}
+
+function gameOver(text) {
+    chessState.value.isActiveGame = false;
+    modal.value.text = text;
+    toggleModal();
+}
+
+function toggleModal() {
+    modal.value.isOpen = !modal.value.isOpen;
 }
 
 function applyForEveryCell(callback, table = chessState.value.table) {
@@ -224,7 +247,10 @@ function applyForSomeCells(cells, callback) {
     });
 }
 
-onMounted(() => {
+async function initNewGame() {
+    const currentTeam = 'white';
+    const enemyTeam = 'black';
+    const isActiveGame = true;
     const table = [];
 
     for (let y = 0; y < 8; y++) {
@@ -269,13 +295,24 @@ onMounted(() => {
         };
     });
 
-    chessState.value.table = table;
-});
+    chessState.value = {};
+
+    await nextTick();
+
+    chessState.value = {
+        currentTeam,
+        enemyTeam,
+        isActiveGame,
+        table
+    };
+}
+
+onMounted(initNewGame);
 
 watch(
     () => chessState.value.table,
     () => {
-        if (!chessState.value.table.length) return;
+        if (!Object.keys(chessState.value).length) return;
         checkGameStatus();
     },
     {
@@ -288,6 +325,18 @@ watch(
     <div class="chess">
         <div class="chess__wrapper wrapper">
             <ChessTable />
+            <Modal :modalConfig :isOpen="modal.isOpen" @toggleModal="toggleModal">
+                <h5>
+                    {{ modal.text }}
+                </h5>
+            </Modal>
+            <Button
+                class="chess__new-game"
+                :buttonConfig
+                @click="initNewGame"
+            >
+                New Game
+            </Button>
         </div>
     </div>
 </template>
@@ -295,5 +344,15 @@ watch(
 <style lang="scss" scoped>
 .chess {
     margin-top: 60px;
+    margin-bottom: 60px;
+
+    &__wrapper {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    &__new-game {
+        margin-top: 40px;
+    }
 }
 </style>

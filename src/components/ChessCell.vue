@@ -10,7 +10,7 @@ const {
 } = inject('chessState');
 
 function onCellClick() {
-    if (!isCurrentTeamMove() && !cellData.active) return;
+    if (!isCurrentTeam() && !cellData.active) return;
     
     if (cellData.selected) {
         unselectCell(cellData.coordinates);
@@ -36,8 +36,8 @@ function onEmptyCellClick() {
     }
 }
 
-function isCurrentTeamMove() {
-    return chessState.value.teamMove === cellData.figure.team;
+function isCurrentTeam() {
+    return chessState.value.currentTeam === cellData.figure.team;
 }
 
 function setFigureCoordinates() {
@@ -61,7 +61,7 @@ onUpdated(() => {
             white: (cellData.coordinates.x + cellData.coordinates.y) % 2 === 0,
             active: cellData.active,
             selected: cellData.selected,
-            currentTeamMove: chessState.teamMove === cellData.figure.team
+            currentTeam: chessState.currentTeam === cellData.figure.team
         }"
         @click="onCellClick"
     >
@@ -98,7 +98,7 @@ onUpdated(() => {
         border-color: $colorActive;
         cursor: pointer;
 
-        &:not(.currentTeamMove):not(.empty) {
+        &:not(.currentTeam):not(.empty) {
             border-color: $colorDanger;
         }
     }
@@ -107,7 +107,7 @@ onUpdated(() => {
         border-color: $colorActive;
     }
 
-    &.currentTeamMove {
+    &.currentTeam {
         cursor: pointer;
     }
 
