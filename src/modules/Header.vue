@@ -15,13 +15,16 @@
                 <RouterLink to="/chess" class="header__nav-link" exact-active-class="active">
                     Chess
                 </RouterLink>
+                <RouterLink to="/form-builder" class="header__nav-link" exact-active-class="active">
+                    Form Builder
+                </RouterLink>
             </ul>
         </div>
     </header>
 </template>
 
 <style lang="scss" scoped>
-@import '@styles/variables.scss';
+@import '@/styles/variables.scss';
 
 .header {
     display: flex;

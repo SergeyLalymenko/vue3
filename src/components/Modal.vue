@@ -1,6 +1,6 @@
 <script setup>
 import { Teleport, Transition } from 'vue';
-import Close from '@UI/Close.vue';
+import Close from '@/UI/Close.vue';
 const props = defineProps(['modalConfig', 'isOpen']);
 defineEmits(['toggleModal']);
 
@@ -36,7 +36,7 @@ const modalConfig = {
 </template>
 
 <style lang="scss" scoped>
-@import '@styles/variables.scss';
+@import '@/styles/variables.scss';
 
 .modal {
     position: fixed;

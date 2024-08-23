@@ -20,7 +20,7 @@ const buttonConfig = {
 </template>
 
 <style lang="scss" scoped>
-@import '@styles/variables.scss';
+@import '@/styles/variables.scss';
 
 .button {
     background: none;

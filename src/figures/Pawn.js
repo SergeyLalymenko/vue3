@@ -1,6 +1,6 @@
-import Figure from '@figures/Figure.js';
-import pawnBlack from '@assets/icons/pawn-black.png';
-import pawnWhite from '@assets/icons/pawn-white.png';
+import Figure from '@/figures/Figure.js';
+import pawnBlack from '@/assets/icons/pawn-black.png';
+import pawnWhite from '@/assets/icons/pawn-white.png';
 
 class Pawn extends Figure {
     constructor(team, initialCoordinates) {

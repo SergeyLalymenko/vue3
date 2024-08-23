@@ -1,6 +1,6 @@
-import Figure from '@figures/Figure.js';
-import bishopBlack from '@assets/icons/bishop-black.png';
-import bishopWhite from '@assets/icons/bishop-white.png';
+import Figure from '@/figures/Figure.js';
+import bishopBlack from '@/assets/icons/bishop-black.png';
+import bishopWhite from '@/assets/icons/bishop-white.png';
 
 class Bishop extends Figure {
     constructor(team, initialCoordinates) {

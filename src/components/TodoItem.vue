@@ -19,7 +19,7 @@ defineEmits(['toggleTodo', 'deleteTodo']);
 </template>
 
 <style lang="scss" scoped>
-@import '@styles/variables.scss';
+@import '@/styles/variables.scss';
 
 .todo {
     display: flex;

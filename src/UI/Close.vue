@@ -11,7 +11,7 @@ const size = props.size || 'md';
 </template>
 
 <style lang="scss" scoped>
-@import '@styles/variables.scss';
+@import '@/styles/variables.scss';
 
 .close {
     position: relative;

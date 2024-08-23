@@ -1,6 +1,6 @@
-import Figure from '@figures/Figure.js';
-import rookBlack from '@assets/icons/rook-black.png';
-import rookWhite from '@assets/icons/rook-white.png';
+import Figure from '@/figures/Figure.js';
+import rookBlack from '@/assets/icons/rook-black.png';
+import rookWhite from '@/assets/icons/rook-white.png';
 
 class Rook extends Figure {
     constructor(team, initialCoordinates) {

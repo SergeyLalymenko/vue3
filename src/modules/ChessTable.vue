@@ -1,6 +1,6 @@
 <script setup>
 import { inject } from 'vue';
-import ChessCell from '@components/ChessCell.vue';
+import ChessCell from '@/components/ChessCell.vue';
 
 const {
     chessState
@@ -21,7 +21,7 @@ const {
 </template>
 
 <style lang="scss" scoped>
-@import '@styles/variables.scss';
+@import '@/styles/variables.scss';
 
 .table {
     width: 100%;

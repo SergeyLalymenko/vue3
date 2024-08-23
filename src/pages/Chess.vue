@@ -1,15 +1,15 @@
 <script setup>
 import { ref, provide, onMounted, watch, nextTick } from 'vue';
 import { _ } from 'lodash';
-import Rook from '@figures/Rook.js';
-import Knight from '@figures/Knight.js';
-import Bishop from '@figures/Bishop.js';
-import Queen from '@figures/Queen.js';
-import King from '@figures/King.js';
-import Pawn from '@figures/Pawn.js';
-import ChessTable from '@modules/ChessTable.vue';
-import Button from '@UI/Button.vue';
-import Modal from '@components/Modal.vue';
+import Rook from '@/figures/Rook.js';
+import Knight from '@/figures/Knight.js';
+import Bishop from '@/figures/Bishop.js';
+import Queen from '@/figures/Queen.js';
+import King from '@/figures/King.js';
+import Pawn from '@/figures/Pawn.js';
+import ChessTable from '@/modules/ChessTable.vue';
+import Button from '@/UI/Button.vue';
+import Modal from '@/components/Modal.vue';
 
 const chessState = ref({});
 const modal = ref({
@@ -126,7 +126,7 @@ function checkStalemate() {
     applyForEveryCell((cell) => {
         const availableMoves = cell.figure?.team === chessState.value.currentTeam && cell.figure.getAvailableMoves(chessState.value.table);
         if (!availableMoves) return;
-        
+
         availableMoves.forEach((availableMove) => {
             const tableCopy = createTableCopy(cell.coordinates, availableMove);
             const isKingUnderAttack = getIsKingUnderAttack(tableCopy);

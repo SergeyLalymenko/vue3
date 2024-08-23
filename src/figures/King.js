@@ -1,6 +1,6 @@
-import Figure from '@figures/Figure.js';
-import kingBlack from '@assets/icons/king-black.png';
-import kingWhite from '@assets/icons/king-white.png';
+import Figure from '@/figures/Figure.js';
+import kingBlack from '@/assets/icons/king-black.png';
+import kingWhite from '@/assets/icons/king-white.png';
 
 class King extends Figure {
     constructor(team, initialCoordinates) {
